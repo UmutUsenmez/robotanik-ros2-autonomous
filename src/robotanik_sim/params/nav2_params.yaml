@@ -48,10 +48,6 @@ bt_navigator:
     bt_loop_duration: 10
     default_server_timeout: 20
     wait_for_service_timeout: 1000
-    # 'default_nav_through_poses_bt_xml' and 'default_nav_to_pose_bt_xml' are use defaults:
-    # nav2_bt_navigator/navigate_to_pose_w_replanning_and_recovery.xml
-    # nav2_bt_navigator/navigate_through_poses_w_replanning_and_recovery.xml
-    # They can be set here or via a RewrittenYaml remap from a parent launch file to Nav2.
     plugin_lib_names:
       - nav2_compute_path_to_pose_action_bt_node
       - nav2_compute_path_through_poses_action_bt_node
@@ -118,10 +114,9 @@ controller_server:
     min_theta_velocity_threshold: 0.001
     failure_tolerance: 0.3
     progress_checker_plugin: "progress_checker"
-    goal_checker_plugins: ["general_goal_checker"] # "precise_goal_checker"
+    goal_checker_plugins: ["general_goal_checker"]
     controller_plugins: ["FollowPath"]
 
-    # Progress checker parameters
     progress_checker:
       plugin: "nav2_controller::SimpleProgressChecker"
       required_movement_radius: 0.5
@@ -133,7 +128,6 @@ controller_server:
       xy_goal_tolerance: 0.25
       yaw_goal_tolerance: 0.25
 
-    # DWB parameters
     FollowPath:
       plugin: "dwb_core::DWBLocalPlanner"
       debug_trajectory_details: True
@@ -157,7 +151,7 @@ controller_server:
       sim_time: 1.7
       linear_granularity: 0.05
       angular_granularity: 0.025
-      transform_tolerance: 0.2
+      transform_tolerance: 1.0
       xy_goal_tolerance: 0.25
       trans_stopped_velocity: 0.25
       short_circuit_trajectory_evaluation: True
@@ -185,43 +179,20 @@ local_costmap:
       width: 3
       height: 3
       resolution: 0.05
-      robot_radius: 0.22
-      # İŞTE TEK DEĞİŞİKLİK BURADA: range_layer listeye eklendi!
-      plugins: ["voxel_layer", "range_layer", "inflation_layer"]
+      # robot_radius silindi, yerine robotun dikdörtgen ölçüleri eklendi
+      footprint: '[[0.20,0.22],[0.20,-0.22],[-0.20,-0.22],[-0.20,0.22]]'
+      plugins: ["range_layer", "inflation_layer"]
       range_layer:
         plugin: "nav2_costmap_2d::RangeSensorLayer"
         topics: ["/sonar/front_center", "/sonar/front_left", "/sonar/front_right", "/sonar/back"]
         clear_on_max_reading: true
-        phi: 1.2
-        clear_threshold: 0.2
-        mark_threshold: 0.8
+        phi: 0.26            # Gürültüyü kesmek için açı daraltıldı
+        clear_threshold: 0.4  # Hayalet engelleri daha hızlı temizleme
+        mark_threshold: 0.9   # Yalan sinyallere inanmama eşiği
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 6.0
-        inflation_radius: 0.12
-      voxel_layer:
-        plugin: "nav2_costmap_2d::VoxelLayer"
-        enabled: True
-        publish_voxel_map: True
-        origin_z: 0.0
-        z_resolution: 0.05
-        z_voxels: 16
-        max_obstacle_height: 2.0
-        mark_threshold: 0
-        observation_sources: scan
-        scan:
-          topic: /scan
-          max_obstacle_height: 2.0
-          clearing: True
-          marking: True
-          data_type: "LaserScan"
-          raytrace_max_range: 3.0
-          raytrace_min_range: 0.0
-          obstacle_max_range: 2.5
-          obstacle_min_range: 0.0
-      static_layer:
-        plugin: "nav2_costmap_2d::StaticLayer"
-        map_subscribe_transient_local: True
+        inflation_radius: 0.12 # Koridorda sığabilmesi için mesafe daraltıldı
       always_send_full_costmap: True
 
 global_costmap:
@@ -232,38 +203,30 @@ global_costmap:
       global_frame: map
       robot_base_frame: base_link
       use_sim_time: true
-      robot_radius: 0.22
       resolution: 0.05
       track_unknown_space: true
-      plugins: ["static_layer", "obstacle_layer", "inflation_layer"]
-      obstacle_layer:
-        plugin: "nav2_costmap_2d::ObstacleLayer"
-        enabled: True
-        observation_sources: scan
-        scan:
-          topic: /scan
-          max_obstacle_height: 2.0
-          clearing: True
-          marking: True
-          data_type: "LaserScan"
-          raytrace_max_range: 3.0
-          raytrace_min_range: 0.0
-          obstacle_max_range: 2.5
-          obstacle_min_range: 0.0
+      # robot_radius silindi, yerine robotun dikdörtgen ölçüleri eklendi
+      footprint: '[[0.20,0.22],[0.20,-0.22],[-0.20,-0.22],[-0.20,0.22]]'
+      plugins: ["static_layer", "range_layer", "inflation_layer"]
+      range_layer:
+        plugin: "nav2_costmap_2d::RangeSensorLayer"
+        topics: ["/sonar/front_center", "/sonar/front_left", "/sonar/front_right", "/sonar/back"]
+        clear_on_max_reading: true
+        phi: 0.26            # Gürültüyü kesmek için açı daraltıldı
+        clear_threshold: 0.4  # Hayalet engelleri daha hızlı temizleme
+        mark_threshold: 0.9   # Yalan sinyallere inanmama eşiği
       static_layer:
         plugin: "nav2_costmap_2d::StaticLayer"
         map_subscribe_transient_local: True
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 3.0
-        inflation_radius: 0.15
+        inflation_radius: 0.12 # Koridorda sığabilmesi için mesafe daraltıldı
       always_send_full_costmap: True
 
 map_server:
   ros__parameters:
     use_sim_time: true
-    # Overridden in launch by the "map" launch configuration or provided default value.
-    # To use in yaml, remove the default "map" value in the tb3_simulation_launch.py file & provide full path to map below.
     yaml_filename: ""
 
 map_saver:
@@ -282,8 +245,8 @@ planner_server:
     GridBased:
       plugin: "nav2_navfn_planner/NavfnPlanner"
       tolerance: 0.5
-      use_astar: false
-      allow_unknown: true
+      use_astar: true
+      allow_unknown: false
 
 smoother_server:
   ros__parameters:
