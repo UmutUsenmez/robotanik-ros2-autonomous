@@ -119,8 +119,8 @@ controller_server:
 
     progress_checker:
       plugin: "nav2_controller::SimpleProgressChecker"
-      required_movement_radius: 0.5
-      movement_time_allowance: 10.0
+      required_movement_radius: 0.3
+      movement_time_allowance: 20.0
 
     general_goal_checker:
       stateful: True
@@ -133,11 +133,11 @@ controller_server:
       debug_trajectory_details: True
       min_vel_x: 0.0
       min_vel_y: 0.0
-      max_vel_x: 0.26
+      max_vel_x: 0.15
       max_vel_y: 0.0
-      max_vel_theta: 1.0
+      max_vel_theta: 1.5
       min_speed_xy: 0.0
-      max_speed_xy: 0.26
+      max_speed_xy: 0.15
       min_speed_theta: 0.0
       acc_lim_x: 2.5
       acc_lim_y: 0.0
@@ -147,8 +147,8 @@ controller_server:
       decel_lim_theta: -3.2
       vx_samples: 20
       vy_samples: 5
-      vtheta_samples: 20
-      sim_time: 1.7
+      vtheta_samples: 40
+      sim_time: 4.0
       linear_granularity: 0.05
       angular_granularity: 0.025
       transform_tolerance: 1.0
@@ -157,13 +157,13 @@ controller_server:
       short_circuit_trajectory_evaluation: True
       stateful: True
       critics: ["RotateToGoal", "Oscillation", "BaseObstacle", "GoalAlign", "PathAlign", "PathDist", "GoalDist", "ObstacleFootprint"]
-      BaseObstacle.scale: 20.0
-      ObstacleFootprint.scale: 5.0
+      BaseObstacle.scale: 10.0
+      ObstacleFootprint.scale: 25.0
       PathAlign.scale: 10.0
       GoalAlign.scale: 10.0
       PathDist.scale: 32.0
       GoalDist.scale: 24.0
-      RotateToGoal.scale: 32.0
+      RotateToGoal.scale: 48.0
       RotateToGoal.slowing_factor: 5.0
       RotateToGoal.lookahead_time: -1.0
 
@@ -176,23 +176,24 @@ local_costmap:
       robot_base_frame: base_link
       use_sim_time: true
       rolling_window: true
-      width: 3
-      height: 3
+      width: 4
+      height: 4
       resolution: 0.05
-      # robot_radius silindi, yerine robotun dikdörtgen ölçüleri eklendi
-      footprint: '[[0.20,0.22],[0.20,-0.22],[-0.20,-0.22],[-0.20,0.22]]'
+      footprint: '[[0.25,0.175],[0.25,-0.175],[-0.25,-0.175],[-0.25,0.175]]'
       plugins: ["range_layer", "inflation_layer"]
       range_layer:
         plugin: "nav2_costmap_2d::RangeSensorLayer"
         topics: ["/sonar/front_center", "/sonar/front_left", "/sonar/front_right", "/sonar/back"]
         clear_on_max_reading: true
-        phi: 0.26            # Gürültüyü kesmek için açı daraltıldı
-        clear_threshold: 0.4  # Hayalet engelleri daha hızlı temizleme
-        mark_threshold: 0.9   # Yalan sinyallere inanmama eşiği
+        phi: 0.52
+        mark_threshold: 0.97      # 0.9→0.97: Çok daha emin olmadan işaretleme
+        clear_threshold: 0.15     # 0.4→0.15: Çok daha agresif temizleme
+        no_readings_oks: true     # YENİ: Okuma yoksa temizle
+        input_sensor_std: 0.05    # YENİ: Sensör gürültü toleransı
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 6.0
-        inflation_radius: 0.12 # Koridorda sığabilmesi için mesafe daraltıldı
+        cost_scaling_factor: 8.0
+        inflation_radius: 0.20    # 0.30→0.25: Şişirme azaltıldı
       always_send_full_costmap: True
 
 global_costmap:
@@ -205,29 +206,30 @@ global_costmap:
       use_sim_time: true
       resolution: 0.05
       track_unknown_space: true
-      # robot_radius silindi, yerine robotun dikdörtgen ölçüleri eklendi
-      footprint: '[[0.20,0.22],[0.20,-0.22],[-0.20,-0.22],[-0.20,0.22]]'
+      footprint: '[[0.25,0.175],[0.25,-0.175],[-0.25,-0.175],[-0.25,0.175]]'
       plugins: ["static_layer", "range_layer", "inflation_layer"]
       range_layer:
         plugin: "nav2_costmap_2d::RangeSensorLayer"
         topics: ["/sonar/front_center", "/sonar/front_left", "/sonar/front_right", "/sonar/back"]
         clear_on_max_reading: true
-        phi: 0.26            # Gürültüyü kesmek için açı daraltıldı
-        clear_threshold: 0.4  # Hayalet engelleri daha hızlı temizleme
-        mark_threshold: 0.9   # Yalan sinyallere inanmama eşiği
+        phi: 0.52
+        mark_threshold: 0.97      # 0.9→0.97
+        clear_threshold: 0.15     # 0.4→0.15
+        no_readings_oks: true     # YENİ
+        input_sensor_std: 0.05    # YENİ
       static_layer:
         plugin: "nav2_costmap_2d::StaticLayer"
         map_subscribe_transient_local: True
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 3.0
-        inflation_radius: 0.12 # Koridorda sığabilmesi için mesafe daraltıldı
+        cost_scaling_factor: 2.0
+        inflation_radius: 0.45    # 0.35→0.30
       always_send_full_costmap: True
 
 map_server:
   ros__parameters:
     use_sim_time: true
-    yaml_filename: ""
+    yaml_filename: "/home/umut/robotanik_ws/src/robotanik_sim/maps/robotanik_sera.yaml"
 
 map_saver:
   ros__parameters:
@@ -239,14 +241,15 @@ map_saver:
 
 planner_server:
   ros__parameters:
-    expected_planner_frequency: 20.0
+    expected_planner_frequency: 10.0
     use_sim_time: true
     planner_plugins: ["GridBased"]
     GridBased:
-      plugin: "nav2_navfn_planner/NavfnPlanner"
+      plugin: "nav2_smac_planner/SmacPlannerLattice"
+      allow_unknown: true
       tolerance: 0.5
-      use_astar: true
-      allow_unknown: false
+      minimum_turning_radius: 0.40  # Robotun gerçek dönüş yarıçapı
+      smooth_path: true
 
 smoother_server:
   ros__parameters:
@@ -304,8 +307,8 @@ velocity_smoother:
     smoothing_frequency: 20.0
     scale_velocities: False
     feedback: "OPEN_LOOP"
-    max_velocity: [0.26, 0.0, 1.0]
-    min_velocity: [-0.26, 0.0, -1.0]
+    max_velocity: [0.20, 0.0, 1.0]
+    min_velocity: [-0.20, 0.0, -1.0]
     max_accel: [2.5, 0.0, 3.2]
     max_decel: [-2.5, 0.0, -3.2]
     odom_topic: "odom"

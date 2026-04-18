@@ -1,4 +1,4 @@
-image: /home/aziz/Desktop/ros2_ws/src/robotanik_sim/maps/robotanik_sera.pgm
+image: robotanik_sera.pgm
 resolution: 0.05
 origin: [0.0, 0.0, 0.0]
 negate: 0
