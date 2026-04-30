@@ -186,14 +186,14 @@ local_costmap:
         topics: ["/sonar/front_center", "/sonar/front_left", "/sonar/front_right", "/sonar/back"]
         clear_on_max_reading: true
         phi: 0.52
-        mark_threshold: 0.97      # 0.9→0.97: Çok daha emin olmadan işaretleme
-        clear_threshold: 0.15     # 0.4→0.15: Çok daha agresif temizleme
-        no_readings_oks: true     # YENİ: Okuma yoksa temizle
-        input_sensor_std: 0.05    # YENİ: Sensör gürültü toleransı
+        mark_threshold: 0.97
+        clear_threshold: 0.15
+        no_readings_oks: true
+        input_sensor_std: 0.05
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 8.0
-        inflation_radius: 0.20    # 0.30→0.25: Şişirme azaltıldı
+        inflation_radius: 0.20
       always_send_full_costmap: True
 
 global_costmap:
@@ -208,28 +208,28 @@ global_costmap:
       track_unknown_space: true
       footprint: '[[0.25,0.175],[0.25,-0.175],[-0.25,-0.175],[-0.25,0.175]]'
       plugins: ["static_layer", "range_layer", "inflation_layer"]
+      static_layer:
+        plugin: "nav2_costmap_2d::StaticLayer"
+        map_subscribe_transient_local: True
       range_layer:
         plugin: "nav2_costmap_2d::RangeSensorLayer"
         topics: ["/sonar/front_center", "/sonar/front_left", "/sonar/front_right", "/sonar/back"]
         clear_on_max_reading: true
-        phi: 0.52
-        mark_threshold: 0.97      # 0.9→0.97
-        clear_threshold: 0.15     # 0.4→0.15
-        no_readings_oks: true     # YENİ
-        input_sensor_std: 0.05    # YENİ
-      static_layer:
-        plugin: "nav2_costmap_2d::StaticLayer"
-        map_subscribe_transient_local: True
+        phi: 0.45
+        mark_threshold: 0.96
+        clear_threshold: 0.18
+        no_readings_oks: true
+        input_sensor_std: 0.05
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 2.0
-        inflation_radius: 0.45    # 0.35→0.30
+        inflation_radius: 0.45
       always_send_full_costmap: True
 
 map_server:
   ros__parameters:
     use_sim_time: true
-    yaml_filename: "/home/umut/robotanik_ws/src/robotanik_sim/maps/robotanik_sera.yaml"
+    yaml_filename: "robotanik_sera.yaml"
 
 map_saver:
   ros__parameters:
@@ -248,7 +248,7 @@ planner_server:
       plugin: "nav2_smac_planner/SmacPlannerLattice"
       allow_unknown: true
       tolerance: 0.5
-      minimum_turning_radius: 0.40  # Robotun gerçek dönüş yarıçapı
+      minimum_turning_radius: 0.40
       smooth_path: true
 
 smoother_server:

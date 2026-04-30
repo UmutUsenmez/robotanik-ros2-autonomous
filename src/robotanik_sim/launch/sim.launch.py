@@ -5,6 +5,7 @@ from launch.actions import ExecuteProcess, IncludeLaunchDescription, TimerAction
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
 
+
 def generate_launch_description():
     pkg_share = get_package_share_directory('robotanik_sim')
     urdf_path = os.path.join(pkg_share, 'urdf', 'robotanik.urdf')
@@ -26,24 +27,33 @@ def generate_launch_description():
     )
 
     gazebo = ExecuteProcess(
-        cmd=['gazebo', '--verbose', '-s', 'libgazebo_ros_init.so', '-s', 'libgazebo_ros_factory.so', world_path],
+        cmd=[
+            'gazebo',
+            '--verbose',
+            '-s', 'libgazebo_ros_init.so',
+            '-s', 'libgazebo_ros_factory.so',
+            world_path
+        ],
         output='screen'
     )
 
     spawn_entity = TimerAction(
         period=5.0,
-        actions=[Node(
-            package='gazebo_ros',
-            executable='spawn_entity.py',
-            arguments=[
-                '-entity', 'robotanik',
-                '-file', urdf_path,
-                '-x', '2.5',
-                '-y', '1.0',
-                '-z', '0.2'
-            ],
-            output='screen'
-        )]
+        actions=[
+            Node(
+                package='gazebo_ros',
+                executable='spawn_entity.py',
+                arguments=[
+                    '-entity', 'robotanik',
+                    '-file', urdf_path,
+                    '-x', '10.45',
+                    '-y', '1.0',
+                    '-z', '0.2',
+                    '-Y', '1.5708'
+                ],
+                output='screen'
+            )
+        ]
     )
 
     static_tf_node = Node(
@@ -63,17 +73,37 @@ def generate_launch_description():
     )
 
     nav2_bringup_dir = get_package_share_directory('nav2_bringup')
+
     nav2_node = TimerAction(
         period=10.0,
-        actions=[IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(os.path.join(nav2_bringup_dir, 'launch', 'bringup_launch.py')),
-            launch_arguments={
-                'map': map_yaml_path,
-                'params_file': nav2_params_path,
-                'use_sim_time': 'true',      # ← virgül eklendi
-                'use_composition': 'False'
-            }.items(),
-        )]
+        actions=[
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(
+                    os.path.join(nav2_bringup_dir, 'launch', 'bringup_launch.py')
+                ),
+                launch_arguments={
+                    'map': map_yaml_path,
+                    'params_file': nav2_params_path,
+                    'use_sim_time': 'true',
+                    'use_composition': 'False'
+                }.items(),
+            )
+        ]
+    )
+
+    row_fsm_node = TimerAction(
+        period=18.0,
+        actions=[
+            Node(
+                package='robotanik_sim',
+                executable='row_fsm.py',
+                name='robotanik_row_fsm',
+                output='screen',
+                parameters=[{
+                    'use_sim_time': True
+                }]
+            )
+        ]
     )
 
     return LaunchDescription([
@@ -83,4 +113,5 @@ def generate_launch_description():
         spawn_entity,
         rviz_node,
         nav2_node,
+        row_fsm_node,
     ])
