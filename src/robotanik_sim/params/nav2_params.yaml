@@ -248,7 +248,7 @@ planner_server:
       plugin: "nav2_smac_planner/SmacPlannerLattice"
       allow_unknown: true
       tolerance: 0.5
-      minimum_turning_radius: 0.40
+      minimum_turning_radius: 0.60
       smooth_path: true
 
 smoother_server:
@@ -266,13 +266,17 @@ behavior_server:
     costmap_topic: local_costmap/costmap_raw
     footprint_topic: local_costmap/published_footprint
     cycle_frequency: 10.0
+    # Bak, "spin" kelimesini listeye GERİ EKLEDİK ki Nav2 ağlamasın:
     behavior_plugins: ["spin", "backup", "drive_on_heading", "assisted_teleop", "wait"]
+    
+    # Ama robot gerçekten DÖNEMESİN diye hızlarını 0.0 yaptık:
     spin:
       plugin: "nav2_behaviors/Spin"
       simulate_ahead_time: 2.0
-      max_rotational_vel: 0.0
-      min_rotational_vel: 0.0
-      rotational_acc_lim: 0.0
+      max_rotational_vel: 0.0     # DÖNEMEZ
+      min_rotational_vel: 0.0     # DÖNEMEZ
+      rotational_acc_lim: 0.0     # HIZLANAMAZ
+    
     backup:
       plugin: "nav2_behaviors/BackUp"
       simulate_ahead_time: 2.0
