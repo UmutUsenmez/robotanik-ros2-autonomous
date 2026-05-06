@@ -18,9 +18,10 @@ class AIAnalyzerNode(Node):
         self.bridge = CvBridge()
         
         # 1. DOSYA YOLLARI 
-        leaf_model_path = '/home/umut/robotanik_ws/src/robotanik_vision/models/leafdetectionfinal.pt'
-        disease_model_path = '/home/umut/robotanik_ws/src/robotanik_vision/models/yolo11s_leaf_disease.pt'
-        risk_model_path = '/home/umut/robotanik_ws/src/robotanik_vision/models/linear_risk_model_v4_noisy.pkl'
+	#1. DOSYA YOLLARI (DÜZELTİLDİ)
+        leaf_model_path = '/home/aziz/Desktop/ros2v2/src/robotanik_vision/models/leafdetectionfinal.pt'
+        disease_model_path = '/home/aziz/Desktop/ros2v2/src/robotanik_vision/models/yolo11s_leaf_disease.pt'
+        risk_model_path = '/home/aziz/Desktop/ros2v2/src/robotanik_vision/models/linear_risk_model_v4_noisy.pkl'
         
         # 2. MODELLERİ YÜKLEME
         self.leaf_model = YOLO(leaf_model_path)
@@ -36,7 +37,7 @@ class AIAnalyzerNode(Node):
         self.get_logger().info("Robotanik AI Analyzer: Sistem senin PC için ayağa kalktı!")
 
     def get_danger_coefficient(self, class_name):
-        name_lower = class_name.lower()
+        name_lower = class_name.lower().replace("_", " ")
         for key, value in self.disease_danger_map.items():
             if key in name_lower:
                 return value
@@ -61,8 +62,8 @@ class AIAnalyzerNode(Node):
                 lx1, ly1, lx2, ly2 = map(int, leaf_box.xyxy[0])
                 
                 # ALAN HESABI: Tespit edilen yaprak alanı / Toplam kare alanı
-                leaf_area = (lx2 - lx1) * (ly2 - ly1)
-                spread_ratio = (leaf_area / total_frame_area) * 100.0
+                leaf_area = float(lx2 - lx1) * (ly2 - ly1)
+                spread_ratio = (leaf_area / float(total_frame_area)) * 100.0
                 
                 final_label = "Healthy"
                 box_color = (0, 255, 0) 

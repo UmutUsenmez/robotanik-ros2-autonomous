@@ -19,6 +19,7 @@ install(DIRECTORY
 
 install(PROGRAMS
   scripts/row_fsm.py
+  scripts/real_location_publisher.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

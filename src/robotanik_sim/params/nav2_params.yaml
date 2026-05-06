@@ -1,11 +1,9 @@
 amcl:
   ros__parameters:
     use_sim_time: true
-    # --- ŞEFİN NOKTA ATIŞI MÜDAHALESİ ---
-    # AMCL'ye robotun nerede doğduğunu söylüyoruz ki haritayı bulamayıp çökmesin!
+    # --- HARİTA BAŞLANGIÇ NOKTASI (Kayıbolmayı Önler) ---
     set_initial_pose: true
-    initial_pose: [10.45, 1.0, 0.0, 1.5708] 
-    # ------------------------------------
+    initial_pose: [10.45, 0.6, 0.0, 1.5708] # FSM'in 1.2 hedefine rahat gitmesi için 0.6'da başlar
     alpha1: 0.2
     alpha2: 0.2
     alpha3: 0.2
@@ -124,23 +122,27 @@ controller_server:
 
     progress_checker:
       plugin: "nav2_controller::SimpleProgressChecker"
-      required_movement_radius: 0.3
+      required_movement_radius: 0.2 # Kare dönüşlerde çabuk pes etmesin diye düşürüldü
       movement_time_allowance: 30.0
 
     general_goal_checker:
       stateful: True
       plugin: "nav2_controller::SimpleGoalChecker"
-      xy_goal_tolerance: 0.30
-      yaw_goal_tolerance: 0.30
+      # --- CERRAHİ HEDEFLEME: Dönüş noktalarına tam oturmalı ---
+      xy_goal_tolerance: 0.10        # Tam noktaya gelmeden dönmesin (Milietrik tolerans)
+      yaw_goal_tolerance: 0.10       # Tam paralel olmadan "görevi bitirdim" demesin
 
     FollowPath:
       plugin: "nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController"
       desired_linear_vel: 0.15
-      lookahead_dist: 0.6
-      min_lookahead_dist: 0.3
-      max_lookahead_dist: 0.9
+      
+      # --- KONTROLLÜ MİYOP: Sarsıntısız sürüş, keskin dönüş ---
+      lookahead_dist: 0.45             # Dengeli bakış açısı
+      min_lookahead_dist: 0.25         # Duvara yaklaşınca burnunun ucuna bakar
+      max_lookahead_dist: 0.8          # Düzlüklerde sarsıntıyı önler
       lookahead_time: 1.5
-      rotate_to_heading_angular_vel: 1.2
+      
+      rotate_to_heading_angular_vel: 1.0
       transform_tolerance: 0.1
       use_velocity_scaled_lookahead_dist: true
       min_approach_linear_velocity: 0.05
@@ -151,11 +153,11 @@ controller_server:
       use_fixed_curvature_lookahead: false
       curvature_lookahead_dist: 0.25
       use_cost_regulated_linear_velocity_scaling: true
-      regulated_linear_scaling_min_radius: 0.9
-      regulated_linear_scaling_min_speed: 0.25
+      regulated_linear_scaling_min_radius: 0.5  # Çok keskin manevralara izin ver
+      regulated_linear_scaling_min_speed: 0.15
       use_rotate_to_heading: true
-      allow_reversing: true
-      rotate_to_heading_min_angle: 0.785
+      allow_reversing: false                    # Sera içi geri vites iptal
+      rotate_to_heading_min_angle: 0.4          # Köşelerde daha erken "spin" konumuna geçer
       max_angular_accel: 3.2
       max_robot_pose_search_dist: 10.0
 
@@ -172,6 +174,8 @@ local_costmap:
       height: 4
       resolution: 0.05
       footprint: '[[0.28,0.20],[0.28,-0.20],[-0.28,-0.20],[-0.28,0.20]]'
+      
+      # --- GÖZLERİ AÇIK AMA KORKUSUZ (Optimum Sensör Kullanımı) ---
       plugins: ["range_layer", "inflation_layer"]
       range_layer:
         plugin: "nav2_costmap_2d::RangeSensorLayer"
@@ -184,8 +188,8 @@ local_costmap:
         input_sensor_std: 0.05
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 10.0
-        inflation_radius: 0.15
+        cost_scaling_factor: 15.0      # Duvar dipleri daha yumuşak engel sayılır
+        inflation_radius: 0.16         # Robotu kilitlenmekten kurtaracak minimum sınır
       always_send_full_costmap: True
 
 global_costmap:
@@ -248,16 +252,15 @@ behavior_server:
     costmap_topic: local_costmap/costmap_raw
     footprint_topic: local_costmap/published_footprint
     cycle_frequency: 10.0
-    # Bak, "spin" kelimesini listeye GERİ EKLEDİK ki Nav2 ağlamasın:
     behavior_plugins: ["spin", "backup", "drive_on_heading", "assisted_teleop", "wait"]
     
-    # Ama robot gerçekten DÖNEMESİN diye hızlarını 0.0 yaptık:
+    # --- KARE DÖNÜŞ MOTORU ---
     spin:
       plugin: "nav2_behaviors/Spin"
       simulate_ahead_time: 2.0
-      max_rotational_vel: 0.0     # DÖNEMEZ
-      min_rotational_vel: 0.0     # DÖNEMEZ
-      rotational_acc_lim: 0.0     # HIZLANAMAZ
+      max_rotational_vel: 1.0     # Hızlı ve kararlı dönüş
+      min_rotational_vel: 0.4     # Takılmaması için yüksek tutuldu
+      rotational_acc_lim: 2.0     
     
     backup:
       plugin: "nav2_behaviors/BackUp"
